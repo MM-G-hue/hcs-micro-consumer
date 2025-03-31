@@ -54,13 +54,12 @@ function connectRabbitMQ() {
                     const lines = msg.content.toString().trim().split(/\r?\n/).map(line => line.trim());
 
                     if (messageCount % 100 === 0) {
-                        console.log(`[x] Processed ${messageCount} messages, latest: ${lines.join('\n')}`);
+                        console.log(`[x] Processed ${messageCount} messages.`);
                     }
 
                     try {
                         // Write directly to InfluxDB's built-in buffer
                         writeApi.writeRecords(lines);
-                        console.log(lines);
 
                         // Ensure flush after writing a batch (optional)
                         // if (messageCount % 500 === 0) {
