@@ -51,16 +51,16 @@ function connectRabbitMQ() {
                 RabbitMQQueueName,
                 async function (msg) {
                     messageCount++;
-                    const ilpData = msg.content.toString().trim();
+                    const lines = msg.content.toString().trim().split('\n');
 
                     if (messageCount % 100 === 0) {
-                        console.log(`[x] Processed ${messageCount} messages, latest: ${ilpData}`);
+                        console.log(`[x] Processed ${messageCount} messages, latest: ${lines.join('\n')}`);
                     }
 
                     try {
                         // Write directly to InfluxDB's built-in buffer
-                        writeApi.writeRecords(ilpData);
-                        console.log(ilpData);
+                        writeApi.writeRecords(lines);
+                        console.log(lines);
 
                         // Ensure flush after writing a batch (optional)
                         // if (messageCount % 500 === 0) {
