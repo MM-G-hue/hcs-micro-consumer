@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@influxdata/influxdb-client": "^1.35.0",
     "amqplib": "^0.10.5",
     "dotenv": "^16.4.7",
     "pm2": "^6.0.5"
