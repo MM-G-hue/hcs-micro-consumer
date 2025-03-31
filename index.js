@@ -17,7 +17,11 @@ const InfluxDBBucket = process.env.INFLUXDB_BUCKET;
 const InfluxDBUrl = process.env.INFLUXDB_URL;
 
 const influxDB = new InfluxDB({ url: InfluxDBUrl, token: InfluxDBToken });
-const writeApi = influxDB.getWriteApi(InfluxDBOrg, InfluxDBBucket, 'ns'); // 'ns' ensures timestamp precision
+const writeApi = influxDB.getWriteApi(InfluxDBOrg, InfluxDBBucket, 's', {
+    batchSize: 500,       // Flush when 500 points accumulate
+    flushInterval: 5000,  // Flush every 5 seconds if not full
+    maxRetries: 3,        // Retry up to 3 times on failure
+});
 
 function connectRabbitMQ() {
     amqp.connect(`amqp://${RabbitMQUsername}:${RabbitMQPassword}@${RabbitMQIP}`, function (error0, connection) {
@@ -55,7 +59,8 @@ function connectRabbitMQ() {
 
                     try {
                         // Write directly to InfluxDB's built-in buffer
-                        writeApi.writeRecord(ilpData);
+                        writeApi.writeRecords(ilpData);
+                        console.log(ilpData);
 
                         // Ensure flush after writing a batch (optional)
                         // if (messageCount % 500 === 0) {
