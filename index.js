@@ -1,6 +1,5 @@
 const amqp = require('amqplib/callback_api');
 const { InfluxDB } = require('@influxdata/influxdb-client');
-const { Writable } = require('stream');
 
 require('dotenv').config();
 
@@ -18,62 +17,7 @@ const InfluxDBBucket = process.env.INFLUXDB_BUCKET;
 const InfluxDBUrl = process.env.INFLUXDB_URL;
 
 const influxDB = new InfluxDB({ url: InfluxDBUrl, token: InfluxDBToken });
-const writeApi = influxDB.getWriteApi(InfluxDBOrg, InfluxDBBucket, 'ns'); // 'ms' ensures timestamp precision
-
-// Create a writable stream with error handling
-class InfluxLineProtocolStream extends Writable {
-    constructor(options) {
-        super({ objectMode: true, ...options });
-        this.buffer = [];
-        this.batchSize = options.batchSize || 500;
-        this.flushInterval = options.flushInterval || 5000;
-        this.timer = setInterval(() => this.flush(), this.flushInterval);
-    }
-
-    async _write(lineProtocolData, encoding, callback) {
-        try {
-            this.buffer.push(lineProtocolData);
-
-            if (this.buffer.length >= this.batchSize) {
-                await this.flush();
-            }
-
-            callback();
-        } catch (error) {
-            console.error('InfluxDB Write Failed:', error);
-            callback(error); // Pass error to retry mechanism
-        }
-    }
-
-    async flush() {
-        if (this.buffer.length > 0) {
-            const batch = this.buffer.join('\n'); // Join buffered data into Influx Line Protocol batch
-
-            try {
-                await writeApi.writeRecord(batch);
-                this.buffer = [];
-                console.log('InfluxDB WRITE SUCCESS');
-            } catch (error) {
-                console.error('InfluxDB Flush Error:', error);
-                throw error; // Throw error to indicate failure
-            }
-        }
-    }
-
-    async _final(callback) {
-        clearInterval(this.timer);
-        try {
-            await this.flush();
-            await writeApi.close();
-            console.log('InfluxDB WRITE STREAM CLOSED');
-            callback();
-        } catch (error) {
-            callback(error);
-        }
-    }
-}
-
-const influxStream = new InfluxLineProtocolStream({ batchSize: 500, flushInterval: 3000 });
+const writeApi = influxDB.getWriteApi(InfluxDBOrg, InfluxDBBucket, 'ns'); // 'ns' ensures timestamp precision
 
 function connectRabbitMQ() {
     amqp.connect(`amqp://${RabbitMQUsername}:${RabbitMQPassword}@${RabbitMQIP}`, function (error0, connection) {
@@ -95,7 +39,6 @@ function connectRabbitMQ() {
              * Instead, it will dispatch it to the next worker that is not still busy.
              */
             channel.prefetch(1);
-
             console.log(`[*] Waiting for messages in ${RabbitMQQueueName}. To exit press CTRL+C`);
 
             let messageCount = 0;
@@ -111,13 +54,14 @@ function connectRabbitMQ() {
                     }
 
                     try {
-                        // Send data to InfluxDB
-                        await new Promise((resolve, reject) => {
-                            influxStream.write(ilpData, 'utf-8', (err) => {
-                                if (err) reject(err);
-                                else resolve();
-                            });
-                        });
+                        // Write directly to InfluxDB's built-in buffer
+                        writeApi.writeRecord(ilpData);
+
+                        // Ensure flush after writing a batch (optional)
+                        // if (messageCount % 500 === 0) {
+                        //     console.log("Flushing InfluxDB buffer...");
+                        //     await writeApi.flush();
+                        // }
 
                         // Acknowledge the message ONLY if InfluxDB write succeeds
                         channel.ack(msg);
