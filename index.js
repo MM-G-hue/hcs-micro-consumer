@@ -51,7 +51,7 @@ function connectRabbitMQ() {
                 RabbitMQQueueName,
                 async function (msg) {
                     messageCount++;
-                    const lines = msg.content.toString().trim().split('\n');
+                    const lines = msg.content.toString().trim().split(/\r?\n/).map(line => line.trim());
 
                     if (messageCount % 100 === 0) {
                         console.log(`[x] Processed ${messageCount} messages, latest: ${lines.join('\n')}`);
