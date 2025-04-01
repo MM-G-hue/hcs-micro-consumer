@@ -94,6 +94,7 @@ function createChannel(connection) {
                 if (currentTime - lastLogTime >= LOG_INTERVAL) {
                     const timestamp = new Date().toISOString();
                     console.log(`[${timestamp}] Processed ${messageCount} messages so far.`);
+                    console.log(`[${timestamp}] Last message: ${JSON.stringify(lines)}}`);
                     lastLogTime = currentTime;
                 }
 
