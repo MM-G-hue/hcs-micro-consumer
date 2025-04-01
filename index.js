@@ -80,6 +80,8 @@ function createChannel(connection) {
         console.log(`[*] Waiting for messages in ${RabbitMQQueueName}. To exit press CTRL+C`);
 
         let messageCount = 0;
+        let lastLogTime = Date.now();
+        const LOG_INTERVAL = 5000; // Log every 5 seconds
 
         channel.consume(
             RabbitMQQueueName,
@@ -88,8 +90,11 @@ function createChannel(connection) {
                 messageCount++;
                 const lines = msg.content.toString().trim().split(/\r?\n/).map(line => line.trim());
 
-                if (messageCount % 100 === 0) {
-                    console.log(`[x] Processed ${messageCount} messages.`);
+                const currentTime = Date.now();
+                if (currentTime - lastLogTime >= LOG_INTERVAL) {
+                    const timestamp = new Date().toISOString();
+                    console.log(`[${timestamp}] Processed ${messageCount} messages so far.`);
+                    lastLogTime = currentTime;
                 }
 
                 try {
