@@ -3,8 +3,11 @@ const { writeToInfluxDB } = require('./influxdb');
 require('dotenv').config();
 const logInterval = process.env.LOG_INTERVAL || 5000;
 
+let rabbitmqChannel = null;
+
 function startConsumer() {
     connectToRabbitMQ((channel) => {
+        rabbitmqChannel = channel;
         console.log(`[*] Waiting for messages in ${RabbitMQQueueName}. To exit press CTRL+C`);
 
         let messageCount = 0;

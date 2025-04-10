@@ -4,5 +4,11 @@
     "amqplib": "^0.10.5",
     "dotenv": "^16.4.7",
     "pm2": "^6.0.5"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }
