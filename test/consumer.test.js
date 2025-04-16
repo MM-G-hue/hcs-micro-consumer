@@ -143,10 +143,10 @@ describe('InfluxDB Environment Variables', () => {
     });
 
     test('should throw error if InfluxDB environment variables are missing', () => {
-        delete process.env.INFLUXDB_TOKEN;
-        delete process.env.INFLUXDB_ORG;
-        delete process.env.INFLUXDB_BUCKET;
-        delete process.env.INFLUXDB_URL;
+        process.env.INFLUXDB_TOKEN = '';
+        process.env.INFLUXDB_ORG = '';
+        process.env.INFLUXDB_BUCKET = '';
+        process.env.INFLUXDB_URL = '';
 
         expect(() => {
             require('../src/influxdb');
