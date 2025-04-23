@@ -32,10 +32,12 @@ function startConsumer() {
                 try {
                     await writeToInfluxDB(lines);
                     channel.ack(msg);
+                    console.log("ACK")
                 } catch (error) {
                     console.error('Failed to write to InfluxDB, rejecting message.', error);
                     // nack(message, [allUpTo, [requeue]])
                     channel.nack(msg, false, false);
+                    console.log("NACK")
                 }
             },
             { noAck: false }
