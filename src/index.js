@@ -35,7 +35,7 @@ function startConsumer() {
                 } catch (error) {
                     console.error('Failed to write to InfluxDB, rejecting message.', error);
                     // nack(message, [allUpTo, [requeue]])
-                    channel.nack(msg, false, true);
+                    channel.nack(msg, false, false);
                 }
             },
             { noAck: false }
