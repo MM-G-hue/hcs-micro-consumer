@@ -8,6 +8,10 @@ const RabbitMQUsername = process.env.RABBITMQ_USERNAME;
 const RabbitMQPassword = process.env.RABBITMQ_PASSWORD;
 const RabbitMQRetryInterval = process.env.RABBITMQ_RETRY_INTERVAL || 5000;
 
+const RabbitMQDLX = process.env.RABBITMQ_DLX || 'dlx';
+const RabbitMQDLQ = process.env.RABBITMQ_DLQ || 'dlq';
+const RabbitMQDLXRoutingKey = process.env.RABBITMQ_DLX_ROUTING_KEY || 'dlx-routing-key';
+
 let rabbitmqConnection = null;
 let rabbitmqChannel = null;
 
@@ -63,7 +67,13 @@ function createChannel(connection, callback) {
             setTimeout(() => connectToRabbitMQ(callback), RabbitMQRetryInterval);
         });
 
-        channel.assertQueue(RabbitMQQueueName, { durable: RabbitMQDurable });
+        channel.assertQueue(RabbitMQQueueName, {
+            durable: RabbitMQDurable,
+            arguments: {
+              'x-dead-letter-exchange': RabbitMQDLX,
+              'x-dead-letter-routing-key': RabbitMQDLXRoutingKey
+            }
+          });
         channel.prefetch(1);
         callback(channel);
     });
